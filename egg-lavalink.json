@@ -1,50 +1,53 @@
 {
-    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PELICAN PANEL - PTERODACTYL FORK",
     "meta": {
-        "version": "ptdl_v1",
+        "version": "PTDL_v2",
         "update_url": null
     },
-    "exported_at": "2024-05-22T00:00:00+00:00",
+    "exported_at": "2025-01-15T12:00:00+00:00",
     "name": "Lavalink",
-    "author": "support@pterodactyl.io",
-    "description": "Lavalink is a standalone audio sending node based on Lavaplayer.",
+    "author": "support@pelican.dev",
+    "description": "Lavalink is a standalone audio sending node based on Lavaplayer, designed for Discord music bots.",
     "features": null,
     "docker_images": {
-        "ghcr.io/pterodactyl/yolks:java_17": "ghcr.io/pterodactyl/yolks:java_17"
+        "ghcr.io\/pterodactyl\/yolks:java_21": "ghcr.io\/pterodactyl\/yolks:java_21",
+        "ghcr.io\/pterodactyl\/yolks:java_17": "ghcr.io\/pterodactyl\/yolks:java_17"
     },
     "file_denylist": [],
-    "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar Lavalink.jar",
+    "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -Djdk.tls.client.protocols=TLSv1.3 -Dtls.client.protocols=TLSv1.3 -jar Lavalink.jar",
     "config": {
-        "files": "{\r\n    \"application.yml\": {\r\n        \"parser\": \"yaml\",\r\n        \"find\": {\r\n            \"server.port\": \"{{server.build.default.port}}\",\r\n            \"lavalink.server.password\": \"{{env.PASSWORD}}\"\r\n        }\r\n    }\r\n}",
-        "startup": "{\r\n    \"done\": \"Lavalink is ready to accept connections.\"\r\n}",
+        "files": "{\r\n    \"application.yml\": {\r\n        \"parser\": \"yaml\",\r\n        \"find\": {\r\n            \"server.port\": \"{{server.build.default.port}}\",\r\n            \"lavalink.server.password\": \"{{server.build.env.LAVALINK_PASSWORD}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Lavalink is ready to accept connections\"\r\n}",
         "logs": "{}",
         "stop": "^C"
     },
     "scripts": {
         "installation": {
-            "script": "#!/bin/bash\r\n# Lavalink Installation Script\r\n#\r\n# Server Files: /mnt/server\r\n\r\ncd /mnt/server\r\n\r\nLATEST_VERSION=$(curl -s https://api.github.com/repos/lavalink-devs/Lavalink/releases/latest | jq -r '.tag_name')\r\n\r\nif [ \"${VERSION}\" == \"latest\" ]; then\r\n    DOWNLOAD_URL=\"https://github.com/lavalink-devs/Lavalink/releases/download/${LATEST_VERSION}/Lavalink.jar\"\r\nelse\r\n    DOWNLOAD_URL=\"https://github.com/lavalink-devs/Lavalink/releases/download/${VERSION}/Lavalink.jar\"\r\nfi\r\n\r\necho -e \"Downloading Lavalink version ${VERSION}...\"\r\ncurl -L -o Lavalink.jar ${DOWNLOAD_URL}\r\n\r\nif [ ! -f application.yml ]; then\r\n    echo -e \"Downloading default application.yml...\"\r\n    curl -L -o application.yml https://raw.githubusercontent.com/lavalink-devs/Lavalink/master/LavalinkServer/application.yml.example\r\nfi\r\n\r\necho -e \"Installation complete.\"",
-            "container": "ghcr.io/pterodactyl/installers:debian",
+            "script": "#!\/bin\/bash\r\n# Lavalink Installation Script\r\n\r\napt update\r\napt install -y curl jq\r\n\r\ncd \/mnt\/server\r\n\r\necho \"Downloading Lavalink...\"\r\n\r\nif [ \"${LAVALINK_VERSION}\" == \"latest\" ] || [ -z \"${LAVALINK_VERSION}\" ]; then\r\n    DOWNLOAD_URL=$(curl -sSL https:\/\/api.github.com\/repos\/lavalink-devs\/Lavalink\/releases\/latest | jq -r '.assets[] | select(.name | endswith(\".jar\")) | .browser_download_url')\r\nelse\r\n    DOWNLOAD_URL=$(curl -sSL https:\/\/api.github.com\/repos\/lavalink-devs\/Lavalink\/releases\/tags\/${LAVALINK_VERSION} | jq -r '.assets[] | select(.name | endswith(\".jar\")) | .browser_download_url')\r\nfi\r\n\r\nif [ -z \"${DOWNLOAD_URL}\" ]; then\r\n    echo \"Error: Could not find Lavalink download URL\"\r\n    exit 1\r\nfi\r\n\r\necho \"Downloading from: ${DOWNLOAD_URL}\"\r\ncurl -sSL -o Lavalink.jar \"${DOWNLOAD_URL}\"\r\n\r\nif [ ! -f \"Lavalink.jar\" ]; then\r\n    echo \"Error: Failed to download Lavalink.jar\"\r\n    exit 1\r\nfi\r\n\r\necho \"Creating default application.yml...\"\r\n\r\ncat > application.yml <<'EOF'\r\nserver:\r\n  port: 2333\r\n  address: 0.0.0.0\r\n\r\nlavalink:\r\n  plugins:\r\n  server:\r\n    password: \"youshallnotpass\"\r\n    sources:\r\n      youtube: true\r\n      bandcamp: true\r\n      soundcloud: true\r\n      twitch: true\r\n      vimeo: true\r\n      http: true\r\n      local: false\r\n    bufferDurationMs: 400\r\n    frameBufferDurationMs: 5000\r\n    youtubePlaylistLoadLimit: 6\r\n    playerUpdateInterval: 5\r\n    youtubeSearchEnabled: true\r\n    soundcloudSearchEnabled: true\r\n    gc-warnings: true\r\n\r\nmetrics:\r\n  prometheus:\r\n    enabled: false\r\n    endpoint: \/metrics\r\n\r\nsentry:\r\n  dsn: \"\"\r\n  environment: \"\"\r\n\r\nlogging:\r\n  file:\r\n    path: .\/logs\/\r\n  level:\r\n    root: INFO\r\n    lavalink: INFO\r\n\r\n  logback:\r\n    rollingpolicy:\r\n      max-file-size: 10MB\r\n      max-history: 30\r\nEOF\r\n\r\necho \"Installation complete!\"",
+            "container": "ghcr.io\/pterodactyl\/installers:debian",
             "entrypoint": "bash"
         }
     },
     "variables": [
         {
             "name": "Lavalink Version",
-            "description": "The version of Lavalink to download (e.g., 4.0.0 or latest).",
-            "env_variable": "VERSION",
+            "description": "The version of Lavalink to install. Use 'latest' for the most recent version or specify a version tag (e.g., '4.0.0').",
+            "env_variable": "LAVALINK_VERSION",
             "default_value": "latest",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string|max:20"
+            "rules": "required|string|max:20",
+            "field_type": "text"
         },
         {
             "name": "Lavalink Password",
-            "description": "The password for the Lavalink server.",
-            "env_variable": "PASSWORD",
+            "description": "The password for connecting to Lavalink. Change this for security!",
+            "env_variable": "LAVALINK_PASSWORD",
             "default_value": "youshallnotpass",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string|max:128"
+            "rules": "required|string|max:64",
+            "field_type": "text"
         }
     ]
 }
